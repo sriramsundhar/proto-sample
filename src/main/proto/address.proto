@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+option java_package = "sample.proto";
+option java_multiple_files = true;
+
+message Address {
+  string apartment = 1;
+  string building = 2;
+  string streetName = 3;
+  string town = 4;
+  string region = 5;      // There is a separate regionModel in Hybris
+  string country = 6;     // There is a separate countryModel in Hybris
+  string postalCode = 7;
+}

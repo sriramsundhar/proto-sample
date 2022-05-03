@@ -1,0 +1,47 @@
+image: gradle:jdk11
+
+stages:
+  - build
+  - publish
+
+variables:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+
+before_script:
+  - export GRADLE_USER_HOME=`pwd`/.gradle
+  - echo "setup ssh agent"
+  - eval `ssh-agent -s`
+  - echo $CI_COMMIT_AUTHOR
+  - echo "$CI_SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - >/dev/null
+  - echo "added private ssh"
+  - mkdir -p ~/.ssh
+  - touch ~/.ssh/id_rsa.pub
+  - echo "$CI_SSH_PUBLIC_KEY" | tr -d '\r' > ~/.ssh/id_rsa.pub
+  - echo "added public ssh"
+  - ssh-keyscan -t rsa $CI_SERVER_HOST >> ~/.ssh/known_hosts
+  - git config --global user.email "${CI_EMAIL}" && git config --global user.name "${CI_USER}"
+
+build:
+  stage: build
+  script:
+    - ./gradlew clean build --refresh-dependencies --warning-mode=all
+
+snapshot:
+  stage: publish
+  script:
+    - ./gradlew publish
+  only:
+    variables:
+      - $CI_COMMIT_MESSAGE !~ /^Gradle Release Plugin.*/
+
+release:
+  stage: publish
+  script:
+    - git fetch origin $CI_DEFAULT_BRANCH && git checkout $CI_DEFAULT_BRANCH
+    - ./gradlew release -Prelease.useAutomaticVersion=true
+  only:
+    variables:
+      - $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_MESSAGE !~ /^Gradle Release Plugin.*/
+
+after_script:
+  - echo "End CI"

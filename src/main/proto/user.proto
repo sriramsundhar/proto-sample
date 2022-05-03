@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+option java_package = "sample.proto";
+option java_multiple_files = true;
+
+import "address.proto";
+
+message User {
+  string name = 1;
+  string emailId = 2;
+  Address address = 3;
+}
